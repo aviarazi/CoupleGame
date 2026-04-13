@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>THE ARENA | ELITE EDITION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@300;600;800&family=Secular+One&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg: #050010;
+            --panel: rgba(30, 15, 65, 0.8);
+            --gold: #ffcc00;
+            --gold-glow: 0 0 25px rgba(255, 204, 0, 0.6);
+            --pink: #ff007a;
+            --pink-glow: 0 0 30px rgba(255, 0, 122, 0.8);
+            --blue: #00d4ff;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Assistant', sans-serif;
+            background: var(--bg);
+            background-image: radial-gradient(circle at 50% 0%, #1a0b3d 0%, var(--bg) 100%);
+            color: #fff; margin: 0; padding: 0; min-height: 100vh;
+            display: flex; justify-content: center; overflow-x: hidden;
+        }
+
+        .app { width: 100%; max-width: 480px; padding: 20px; box-sizing: border-box; }
+
+        .screen { display: none; flex-direction: column; animation: fadeIn 0.3s ease; }
+        .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        header { text-align: center; margin-bottom: 35px; }
+        header h1 { 
+            font-family: 'Secular One', sans-serif; font-size: 55px; margin: 0; 
+            background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(255, 204, 0, 0.7)); 
+        }
+        header p { color: var(--blue); font-weight: 800; font-size: 14px; letter-spacing: 2px; text-shadow: 0 0 10px var(--blue); }
+
+        .main-btn {
+            background: rgba(255, 255, 255, 0.03); border: 2px solid var(--gold); border-radius: 25px;
+            color: white; padding: 30px; font-size: 26px; font-weight: 800;
+            cursor: pointer; margin-bottom: 25px; text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6), inset 0 0 15px var(--gold-glow); transition: 0.3s;
+        }
+        .main-btn:active { transform: scale(0.96); border-color: var(--pink); box-shadow: 0 0 40px var(--pink-glow); }
+        .main-btn span { display: block; font-size: 13px; color: var(--blue); margin-top: 8px; font-weight: 400; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding-bottom: 100px; }
+        .prize-card {
+            background: var(--panel); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 22px;
+            padding: 20px; text-align: center; cursor: pointer; transition: 0.2s;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
+        .prize-card:active { border-color: var(--pink); box-shadow: var(--pink-glow); transform: translateY(-3px); }
+        .p-icon { font-size: 38px; display: block; margin-bottom: 10px; filter: drop-shadow(0 0 10px var(--white)); }
+        .p-name { font-size: 14px; font-weight: 700; color: var(--gold); text-shadow: 0 2px 5px #000; }
+
+        .result-card {
+            background: linear-gradient(135deg, #1a0b3d, #050010);
+            border: 5px solid var(--gold); border-radius: 40px;
+            padding: 50px 25px; text-align: center; 
+            box-shadow: 0 0 60px rgba(0,0,0,0.9), 0 0 30px var(--gold-glow);
+        }
+        .share-btn { 
+            background: linear-gradient(45deg, var(--blue), #00f2fe); color: #000; 
+            border: none; padding: 22px; border-radius: 60px; font-weight: 800; font-size: 20px; 
+            width: 100%; margin-top: 25px; box-shadow: 0 0 30px var(--blue); 
+        }
+        .back-link { text-align: center; margin-top: 35px; color: #aaa; cursor: pointer; text-decoration: underline; font-weight: 600; padding: 15px; font-size: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div id="home" class="screen active">
+        <header><p>CHAMPIONS ARENA</p><h1>THE GAME</h1></header>
+        <div class="main-btn" onclick="showWeeklySelection()">🏆 יעד שבועי גדול<span>הפרס שמונח על הכף בסוף השבוע</span></div>
+        <div class="main-btn" style="border-color: var(--pink); box-shadow: inset 0 0 15px var(--pink-glow);" onclick="revealDaily()">🎁 הטיזר היומי<span>למנצח היומי (רנדומלי)</span></div>
+        <div style="text-align: center; opacity: 0.6; font-size: 12px; line-height: 1.5;">המנצח קובע. המפסיד מבצע.</div>
+    </div>
+
+    <div id="weekly-select" class="screen">
+        <header><h1>הפרס הגדול</h1><p>על מה נלחמים השבוע?</p></header>
+        <div class="grid" id="weekly-grid"></div>
+        <div class="back-link" onclick="switchScreen('weekly-select', 'home')">חזרה לתפריט הראשי</div>
+    </div>
+
+    <div id="share-screen" class="screen">
+        <div id="capture-area" class="result-card">
+            <div style="color: var(--pink); font-weight: 800; letter-spacing: 2px; font-size: 12px; text-shadow: 0 0 10px var(--pink);">MATCH PREVIEW</div>
+            <div id="res-icon" style="font-size: 90px; margin: 25px 0; filter: drop-shadow(0 0 15px #fff);"></div>
+            <div id="res-title" style="font-size: 32px; font-weight: 800; color: var(--gold); text-shadow: 0 2px 15px #000;"></div>
+            <p id="res-desc" style="font-style: italic; opacity: 0.9; line-height: 1.6; padding: 0 10px; font-size: 17px;"></p>
+            <div style="margin-top: 35px; border-top: 2px solid rgba(255,255,255,0.1); padding-top: 20px; font-weight: 800; color: var(--blue);">המנצח לוקח הכל.</div>
+        </div>
+        <button class="share-btn" onclick="saveAndShare()">📸 הכן תמונה לשיתוף</button>
+        <div class="back-link" onclick="handleBack()">🔙 חזור לרשימה</div>
+    </div>
+</div>
+
+<script>
+    let scrollPos = 0;
+    let lastScreen = 'home';
+
+    const weeklyPrizes = [
+        // FUNNY & CHORES
+        { t: "המלצר האישי", d: "הגשה בלבוש מינימלי ופנייה בכבוד של משרת.", i: "🎩" },
+        { t: "נהג פרטי ליום", d: "המפסיד מסיע את המנצח לכל מקום שיבחר.", i: "🚗" },
+        { t: "שומר הראש", d: "המפסיד צמוד למנצח ומבצע כל בקשה לערב שלם.", i: "🛡️" },
+        { t: "שעת שקט ממטלות", d: "שעה שבה המפסיד מבצע כל מה שהמנצח מבקש.", i: "🧹" },
+        { t: "ערב סרטים VIP", d: "בחירת סרט והגשת פופקורן וארוחה ע'י המפסיד.", i: "🍿" },
+        { t: "שטיפת רכב יסודית", d: "המפסיד מקרצף את הרכב כולל פנים.", i: "🧼" },
+        { t: "פטור שבועי מכלים", d: "שבוע שלם ללא נגיעה בכיור או במדיח.", i: "🍽️" },
+        { t: "משימת הסטורי", d: "פוסט הערצה מוגזם למנצח ברשתות.", i: "📱" },
+        { t: "חיקוי של שעה", d: "המפסיד מחקה את המנצח שעה שלמה.", i: "🎭" },
+        { t: "נאום הערצה", d: "נאום מרגש על עליונות המנצח.", i: "🎤" },
+        { t: "בחירת פלייליסט", d: "המנצח שולט במוזיקה יום שלם.", i: "🎵" },
+        { t: "סטייליסט אישי", d: "המנצח בוחר למפסיד את הבגדים ליציאה הבאה.", i: "👗" },
+        { t: "בוקר שקט", d: "המפסיד לוקח על עצמו את כל הילדים והבית בבוקר.", i: "😴" },
+        { t: "שליט השלט", d: "שליטה מוחלטת על כל החלטה בבית ליום שלם.", i: "📺" },
+        { t: "שף פרטי לערב", d: "ארוחת 3 מנות שבושלה ע'י המפסיד.", i: "👨‍🍳" },
+
+        // SEXUAL
+        { t: "עיסוי חושני", d: "עיסוי גוף מלא עם שמן באווירה רגועה.", i: "🕯️" },
+        { t: "בודי מסאז'", d: "מגע עור בעור מלא עם שמן לאורך כל הגוף.", i: "🧴" },
+        { t: "מקלחת משותפת", d: "סיבון ופינוק מלא של המנצח תחת המים.", i: "🚿" },
+        { t: "בחירת הלבשה תחתונה", d: "המנצח בוחר מה המפסיד ילבש בערב.", i: "👙" },
+        { t: "משחק מקדים ארוך", d: "פוקוס בלעדי על הנאת המנצח ללא הגבלה.", i: "⌛" },
+        { t: "בוקר של פינוק", d: "סקס בוקר ביזמת המפסיד עם כל הפינוקים.", i: "☀️" },
+        { t: "משחקי טמפרטורה", d: "שימוש בקוביות קרח או שעוות נרות עיסוי.", i: "🧊" },
+        { t: "כיסוי עיניים", d: "גירוי חושי כשהמפסיד לא רואה דבר.", i: "🌑" },
+        { t: "החלפת לוקיישן", d: "סקס בכל מקום בבית שהוא לא המיטה.", i: "🛋️" },
+        { t: "לילה של 'רק אתה'", d: "ערב שלם המוקדש לעינוג המנצח בלבד.", i: "🎁" },
+        { t: "אמבטיה אירוטית", d: "קצף, נרות וקרצוף חושני באמבטיה.", i: "🛁" },
+        { t: "ריקוד בלבנים", d: "ריקוד קצר בלבנים לבחירת המנצח.", i: "👠" },
+        { t: "מבחן טעימות", d: "אכילת פירות/שוקולד מעל גוף המפסיד.", i: "🍓" },
+        { t: "ספא חדר שינה", d: "אמבטיה, קרמים ועיסוי של שעה.", i: "🧼" },
+        { t: "קלפי הגורל", d: "המנצח מכין 3 פתקים, המפסיד בוחר אחד.", i: "🃏" },
+        { t: "סיור בוקר אינטימי", d: "פינוק אינטימי מושקע בבוקר ללא חדירה.", i: "🌅" },
+
+        // VERY SEXUAL & FANTASIES
+        { t: "אוראלי לפי דרישה", d: "פינוק אוראלי מושקע וממושך לבקשת המנצח.", i: "🍭" },
+        { t: "משחקי תפקידים", d: "כניסה לדמויות וסיטואציה לבחירת המנצח.", i: "🎭" },
+        { t: "שימוש באביזרים", d: "בחירת צעצוע או אביזר לשילוב במיטה.", i: "⚙️" },
+        { t: "סטריפטיז פרטי", d: "ריקוד חושני והתפשטות איטית לצלילי מוזיקה.", i: "💃" },
+        { t: "שליטה במיטה", d: "המנצח קובע קצב ותנוחות באופן בלעדי.", i: "⛓️" },
+        { t: "ערב 'כן' מוחלט", d: "המפסיד לא אומר לא לבקשות מיניות כל הלילה.", i: "🔥" },
+        { t: "פנטזיית המדים", d: "בחירת תלבושת שהמפסיד חייב ללבוש.", i: "🧑‍✈️" },
+        { t: "קשירות קלות", d: "הגבלת המפסיד בצעיפים או אזיקים.", i: "🎀" },
+        { t: "סקס מול מראה", d: "קיום יחסי מין מול מראה גדולה.", i: "🪞" },
+        { t: "אורגזמה בשליטה", d: "הבאה לקצה (Edging) ועצירה עד לאישור.", i: "⏳" },
+        { t: "פנטזיית הזרים", d: "משחק תפקידים של זרים בבר/מסעדה.", i: "🥂" },
+        { t: "צילום אירוטי (סטילס)", d: "צילום המפסיד בפוזות חושניות לשימוש פרטי.", i: "📸" },
+        { t: "צילום סרטון חושני", d: "תיעוד אקט או סצנה חושנית של שנינו.", i: "🎥" },
+        { t: "סרט פורנו משותף", d: "המפסיד בוחר סרט וצופים בו יחד במיטה.", i: "🔞" },
+        { t: "התנסות אנאלית", d: "חדירה או פינוק אנאלי לבקשת המנצח.", i: "🍑" },
+        { t: "חינוך מחדש", d: "לימוד פנטזיה חדשה ותרגולה עד שלמות.", i: "🎓" },
+        { t: "סקס במקום ציבורי", d: "אקט נועז במקום ציבורי לבחירת המנצח.", i: "🚗" },
+        { t: "תחת כיפת השמיים", d: "סקס בחוץ תחת הכוכבים במקום מבודד.", i: "🌌" },
+        { t: "שליטה בשיא", d: "המנצח מחליט מתי המפסיד גומר.", i: "🛑" },
+        { t: "הגשמת פנטזיה", d: "הוצאה לפועל של פנטזיה שתמיד רציתם.", i: "🌠" },
+        { t: "ללא בגדים", d: "איסור בגדים מרגע הכניסה לחדר עד הבוקר.", i: "🔞" },
+        { t: "שליטה מוחלטת", d: "ביצוע כל פקודה לשעתיים רצופות.", i: "🛐" },
+        { t: "הפקת אופנה", d: "צילום סדרת תמונות נועזת בבימוי המנצח.", i: "📷" },
+        { t: "מרתון תשוקה", d: "לילה ללא שינה עד למיצוי מלא.", i: "🌕" }
+    ];
+
+    const dailyPrizes = [
+        { t: "מסאז' רגליים", d: "5 דקות פינוק מול הטלוויזיה.", i: "🦶" },
+        { t: "נשיקה צרפתית", d: "דקה של נשיקה לוהטת בלי להמשיך.", i: "💏" },
+        { t: "שלוק מהיר", d: "פינוק אוראלי קצר ומרגש.", i: "🍭" },
+        { t: "מגע של דקה", d: "דקה של מגע חופשי בכל מקום שתבחר/י.", i: "🤚" },
+        { t: "לחישה אסורה", d: "לחוש משהו נועז באוזן באמצע היום.", i: "👄" },
+        { t: "יד מתחת לבגדים", d: "2 דקות של יד משוטטת בסלון.", i: "🕵️‍♂️" },
+        { t: "מסאז' קרקפת", d: "5 דקות של עיסוי ראש מרגיע.", i: "💆" },
+        { t: "קפה למיטה", d: "המפסיד מכין ומגיש למנצח מחר בבוקר.", i: "☕" },
+        { t: "וידוי אישי", d: "המפסיד מספר בפרטים על האוננות האחרונה שלו.", i: "🤫" },
+        { t: "פטור מכלים", d: "המנצח פטור מכלים לכל היום.", i: "🧼" },
+        { t: "ספאנק/צביטה", d: "אישור להפליק בטוסיק מתי שבא לך.", i: "🍑" },
+        { t: "הורדת פריט", d: "המפסיד מוריד פריט לבוש ונשאר ככה שעה.", i: "👕" },
+        { t: "נשנוש עכשיו", d: "המפסיד מכין צלחת פינוקים ברגע זה.", i: "🍓" }
+    ];
+
+    function showWeeklySelection() {
+        const grid = document.getElementById('weekly-grid'); grid.innerHTML = '';
+        weeklyPrizes.sort((a, b) => a.t.localeCompare(b.t)).forEach(p => {
+            const card = document.createElement('div'); card.className = 'prize-card';
+            card.onclick = () => { scrollPos = window.scrollY; lastScreen = 'weekly-select'; showResult(p, "יעד שבועי גדול"); };
+            card.innerHTML = `<span class="p-icon">${p.i}</span><span class="p-name">${p.t}</span>`;
+            grid.appendChild(card);
+        });
+        switchScreen(null, 'weekly-select');
+    }
+
+    function revealDaily() { lastScreen = 'home'; showResult(dailyPrizes[Math.floor(Math.random()*dailyPrizes.length)], "טיזר יומי למנצח"); }
+
+    function showResult(p, label) {
+        document.getElementById('res-icon').innerText = p.i;
+        document.getElementById('res-title').innerText = p.t;
+        document.getElementById('res-desc').innerText = p.d;
+        switchScreen(null, 'share-screen');
+    }
+
+    function handleBack() {
+        switchScreen('share-screen', lastScreen);
+        if (lastScreen === 'weekly-select') setTimeout(() => window.scrollTo(0, scrollPos), 20);
+    }
+
+    function switchScreen(from, to) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(to).classList.add('active');
+        if (to !== 'share-screen' && to !== 'weekly-select') window.scrollTo(0,0);
+    }
+
+    function saveAndShare() {
+        html2canvas(document.getElementById('capture-area'), { backgroundColor: '#050010', scale: 2 }).then(canvas => {
+            const imgData = canvas.toDataURL("image/png");
+            const newWin = window.open();
+            newWin.document.write('<body style="background:#050010; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0;"><img src="' + imgData + '" style="max-width:90%; border:3px solid #ffcc00; border-radius:20px;"><h2 style="color:white; font-family:sans-serif; margin-top:20px;">לחיצה ארוכה על התמונה לשמירה</h2><button onclick="window.close()" style="margin-top:20px; padding:15px 30px; background:#00d4ff; border:none; border-radius:50px; font-weight:bold; cursor:pointer;">חזור למשחק</button></body>');
+        });
+    }
+
+    showWeeklySelection(); switchScreen(null, 'home');
+</script>
+</body>
+</html>
